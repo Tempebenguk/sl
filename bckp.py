@@ -64,8 +64,8 @@ def log_transaction(message):
     with log_lock:
         with open(LOG_FILE, "a") as log:
             log.write(f"{timestamp} {message}\n")
-
-    with transaction_lock:
+            
+    with print_lock:
         print(f"{timestamp} {message}")
 
 # Inisialisasi pigpio
