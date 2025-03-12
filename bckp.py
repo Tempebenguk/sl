@@ -158,7 +158,7 @@ def count_pulse(gpio, level, tick):
             pi.write(EN_PIN, 0)
         pending_pulse_count += 1
         last_pulse_time = current_time
-        last_pulse_received_time = current_time 
+        # last_pulse_received_time = current_time 
         print(f"🔢 Pulsa diterima: {pending_pulse_count}")  
 
 # Fungsi untuk menangani timeout & pembayaran sukses
