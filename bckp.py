@@ -61,9 +61,9 @@ print_lock = threading.Lock()
 # Fungsi log transaction
 def log_transaction(message):
     timestamp = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
-    with log_lock:
-        with open(LOG_FILE, "a") as log:
-            log.write(f"{timestamp} {message}\n")
+    # with log_lock:
+    #     with open(LOG_FILE, "a") as log:
+    #         log.write(f"{timestamp} {message}\n")
             
     with print_lock:
         print(f"{timestamp} {message}")
@@ -94,7 +94,6 @@ def fetch_invoice_details():
         log_transaction("✅ Tidak ada invoice yang belum dibayar.")
     except requests.exceptions.RequestException as e:
         log_transaction(f"⚠️ Gagal mengambil data invoice: {e}")
-
     return None, None, None
 
 # Fungsi POST hasil transaksi
