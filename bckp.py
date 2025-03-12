@@ -48,14 +48,11 @@ payment_token = None
 product_price = 0
 last_pulse_received_time = time.time()
 insufficient_payment_count = 0
-log_lock = threading.Lock()
-print_lock = threading.Lock()
 
 # Fungsi log transaction
 def log_transaction(message):
     timestamp = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
-    with print_lock:
-        print(f"{timestamp} {message}")
+    print(f"{timestamp} {message}")
 
 # Inisialisasi pigpio
 pi = pigpio.pi()
@@ -162,8 +159,7 @@ def count_pulse(gpio, level, tick):
         pending_pulse_count += 1
         last_pulse_time = current_time
         last_pulse_received_time = current_time 
-        with print_lock:
-            print(f"🔢 Pulsa diterima: {pending_pulse_count}")  
+        print(f"🔢 Pulsa diterima: {pending_pulse_count}")  
 
 # Fungsi untuk menangani timeout & pembayaran sukses
 def start_timeout_timer():
@@ -205,9 +201,8 @@ def start_timeout_timer():
                     log_transaction(f"✅ Transaksi sukses, kelebihan: Rp.{overpaid}")
 
                 send_transaction_status()
-                break 
-        with print_lock:    
-            print(f"\r⏳ Timeout dalam {remaining_time} detik...", end="")
+                break  
+        print(f"\r⏳ Timeout dalam {remaining_time} detik...", end="")
         time.sleep(1)
 
 def process_final_pulse_count():
@@ -232,8 +227,7 @@ def process_final_pulse_count():
 
     pending_pulse_count = 0 
     pi.write(EN_PIN, 1)
-    with print_lock:
-        print("✅ Koreksi selesai, EN_PIN diaktifkan kembali")
+    print("✅ Koreksi selesai, EN_PIN diaktifkan kembali")
 
 # Reset transaksi setelah selesai
 def reset_transaction():
