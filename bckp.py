@@ -288,7 +288,7 @@ def trigger_transaction():
         log_transaction("🔍 Mencari payment token terbaru...")
         
         try:
-            response = requests.get(TOKEN_API, timeout=5)
+            response = requests.get(TOKEN_API, timeout=1)
             response_data = response.json()
 
             if response.status_code == 200 and "data" in response_data:
@@ -327,7 +327,6 @@ def trigger_transaction():
         except requests.exceptions.RequestException as e:
             log_transaction(f"⚠️ Gagal mengambil daftar payment token: {e}")
             time.sleep(1)
-    return jsonify({"status": "success", "message": "Transaksi dimulai"}), 200
 
 if __name__ == "__main__":
     pi.callback(BILL_ACCEPTOR_PIN, pigpio.RISING_EDGE, count_pulse)
