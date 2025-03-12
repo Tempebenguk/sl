@@ -278,7 +278,7 @@ def process_final_pulse_count():
 
 # 📌 Reset transaksi setelah selesai
 def reset_transaction():
-    global transaction_active, total_inserted, id_trx, payment_token, product_price, last_pulse_received_time, insufficient_payment_count
+    global transaction_active, total_inserted, id_trx, payment_token, product_price, last_pulse_received_time, insufficient_payment_count, pending_pulse_count
     transaction_active = False
     total_inserted = 0
     id_trx = None
@@ -286,6 +286,7 @@ def reset_transaction():
     product_price = 0
     last_pulse_received_time = time.time()  # 🔥 Reset waktu terakhir pulsa diterima
     insufficient_payment_count = 0  # 🔥 Reset penghitung pembayaran kurang
+    pending_pulse_count = 0  # 🔥 Reset pending pulse count agar tidak terhitung dobel
     log_transaction("🔄 Transaksi di-reset ke default.")
 
 @app.route('/api/status', methods=['GET'])
@@ -304,7 +305,7 @@ def get_bill_acceptor_status():
     }), 200  # 200 (OK)
 
 def trigger_transaction():
-    global transaction_active, total_inserted, id_trx, payment_token, product_price, last_pulse_received_time
+    global transaction_active, total_inserted, id_trx, payment_token, product_price, last_pulse_received_time, pending_pulse_count
     
     while True:
         if transaction_active:
@@ -339,6 +340,7 @@ def trigger_transaction():
                                 product_price = int(invoice["productPrice"])
 
                                 transaction_active = True
+                                pending_pulse_count = 0  # 🔥 Reset pending pulse count saat transaksi baru dimulai
                                 last_pulse_received_time = time.time()
                                 log_transaction(f"🔔 Transaksi dimulai! ID: {id_trx}, Token: {payment_token}, Tagihan: Rp.{product_price}")
                                 pi.write(EN_PIN, 1)
