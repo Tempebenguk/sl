@@ -62,10 +62,10 @@ print_lock = threading.Lock()
 def log_transaction(message):
     timestamp = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
     with log_lock:
-        # with open(LOG_FILE, "a") as log:
-        #     log.write(f"{timestamp} {message}\n")
-        with print_lock:
-            print(f"{timestamp} {message}")
+        with open(LOG_FILE, "a") as log:
+            log.write(f"{timestamp} {message}\n")
+        # with print_lock:
+        #     print(f"{timestamp} {message}")
 
 # Inisialisasi pigpio
 pi = pigpio.pi()
