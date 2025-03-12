@@ -56,6 +56,16 @@ timeout_thread = None
 insufficient_payment_count = 0
 transaction_lock = threading.Lock()
 log_lock = threading.Lock()
+print_lock = threading.Lock()
+
+# Fungsi log transaction
+def log_transaction(message):
+    timestamp = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
+    with log_lock:
+        with open(LOG_FILE, "a") as log:
+            log.write(f"{timestamp} {message}\n")
+        with print_lock:
+            print(f"{timestamp} {message}")
 
 # Inisialisasi pigpio
 pi = pigpio.pi()
@@ -67,14 +77,6 @@ pi.set_mode(BILL_ACCEPTOR_PIN, pigpio.INPUT)
 pi.set_pull_up_down(BILL_ACCEPTOR_PIN, pigpio.PUD_UP)
 pi.set_mode(EN_PIN, pigpio.OUTPUT)
 pi.write(EN_PIN, 0)
-
-# Fungsi log transaction
-def log_transaction(message):
-    timestamp = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
-    with log_lock:
-        with open(LOG_FILE, "a") as log:
-            log.write(f"{timestamp} {message}\n")
-        print(f"{timestamp} {message}")
 
 # Fungsi GET ke API Invoice
 def fetch_invoice_details():
