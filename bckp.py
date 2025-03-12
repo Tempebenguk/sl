@@ -179,7 +179,6 @@ def count_pulse(gpio, level, tick):
             timeout_thread.start()
 
 # Fungsi untuk menangani timeout & pembayaran sukses
-
 def start_timeout_timer():
     global total_inserted, product_price, transaction_active, last_pulse_received_time, id_trx
 
@@ -245,8 +244,8 @@ def process_final_pulse_count():
     else:
         log_transaction(f"⚠️ Pulsa {pending_pulse_count} tidak valid!")
 
-    pending_pulse_count = 0  # Reset setelah diproses
-    pi.write(EN_PIN, 1)  # Hidupkan kembali EN_PIN setelah koreksi
+    pending_pulse_count = 0 
+    pi.write(EN_PIN, 1)
     print("✅ Koreksi selesai, EN_PIN diaktifkan kembali")
 
 # Reset transaksi setelah selesai
