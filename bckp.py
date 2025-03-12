@@ -12,7 +12,6 @@ EN_PIN = 15
 TIMEOUT = 15
 DEBOUNCE_TIME = 0.05
 TOLERANCE = 2
-MAX_RETRY = 0 
 
 # Mapping jumlah pulsa ke nominal uang
 PULSE_MAPPING = {
@@ -47,7 +46,6 @@ id_trx = None
 payment_token = None
 product_price = 0
 last_pulse_received_time = time.time()
-insufficient_payment_count = 0
 
 # Fungsi log transaction
 def log_transaction(message):
@@ -108,21 +106,10 @@ def send_transaction_status():
             log_transaction(f"⚠️ Gagal ({response.status_code}): {error_message}")
 
             if "Insufficient payment" in error_message:
-                global insufficient_payment_count
-                insufficient_payment_count += 1 
-
-                if insufficient_payment_count > MAX_RETRY:
-                    log_transaction("🚫 Pembayaran kurang dan telah melebihi toleransi transaksi, transaksi dibatalkan!")
-                    reset_transaction()
-                    pi.write(EN_PIN, 1)
-                    trigger_transaction()  
-                else:
-                    log_transaction(f"🔄 Pembayaran kurang, percobaan {insufficient_payment_count}/{MAX_RETRY}. Lanjutkan memasukkan uang...")
-                    last_pulse_received_time = time.time()
-                    transaction_active = True 
-                    pi.write(EN_PIN, 1)  
-                    start_timeout_timer()
-
+                log_transaction("🚫 Pembayaran kurang, transaksi dibatalkan!")
+                reset_transaction()
+                pi.write(EN_PIN, 1)
+                trigger_transaction()  
             elif "Payment already completed" in error_message:
                 log_transaction("✅ Pembayaran sudah selesai sebelumnya. Reset transaksi.")
                 pi.write(EN_PIN, 0)  
@@ -159,7 +146,6 @@ def count_pulse(gpio, level, tick):
             pi.write(EN_PIN, 0)
         pending_pulse_count += 1
         last_pulse_time = current_time
-        # last_pulse_received_time = current_time 
         print(f"🔢 Pulsa diterima: {pending_pulse_count}")  
 
 # Fungsi untuk menangani timeout & pembayaran sukses
@@ -232,14 +218,13 @@ def process_final_pulse_count():
 
 # Reset transaksi setelah selesai
 def reset_transaction():
-    global transaction_active, total_inserted, id_trx, payment_token, product_price, last_pulse_received_time, insufficient_payment_count, pending_pulse_count
+    global transaction_active, total_inserted, id_trx, payment_token, product_price, last_pulse_received_time, pending_pulse_count
     transaction_active = False
     total_inserted = 0
     id_trx = None
     payment_token = None
     product_price = 0
     last_pulse_received_time = time.time()  
-    insufficient_payment_count = 0  
     pending_pulse_count = 0  
     log_transaction("🔄 Transaksi di-reset ke default.")
 
