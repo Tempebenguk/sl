@@ -64,8 +64,8 @@ def log_transaction(message):
     with log_lock:
         with open(LOG_FILE, "a") as log:
             log.write(f"{timestamp} {message}\n")
-        # with print_lock:
-        #     print(f"{timestamp} {message}")
+        with print_lock:
+            print(f"{timestamp} {message}")
 
 # Inisialisasi pigpio
 pi = pigpio.pi()
@@ -173,7 +173,8 @@ def count_pulse(gpio, level, tick):
         pending_pulse_count += 1
         last_pulse_time = current_time
         last_pulse_received_time = current_time 
-        print(f"🔢 Pulsa diterima: {pending_pulse_count}")  
+        with print_lock:
+            print(f"🔢 Pulsa diterima: {pending_pulse_count}")  
         if timeout_thread is None or not timeout_thread.is_alive():
             timeout_thread = threading.Thread(target=start_timeout_timer, daemon=True)
             timeout_thread.start()
@@ -220,8 +221,8 @@ def start_timeout_timer():
 
                     send_transaction_status()
                     break 
-
-            print(f"\r⏳ Timeout dalam {remaining_time} detik...", end="")
+            with print_lock:    
+                print(f"\r⏳ Timeout dalam {remaining_time} detik...", end="")
             time.sleep(1)
 
 def process_final_pulse_count():
@@ -246,7 +247,8 @@ def process_final_pulse_count():
 
     pending_pulse_count = 0 
     pi.write(EN_PIN, 1)
-    print("✅ Koreksi selesai, EN_PIN diaktifkan kembali")
+    with print_lock:
+        print("✅ Koreksi selesai, EN_PIN diaktifkan kembali")
 
 # Reset transaksi setelah selesai
 def reset_transaction():
