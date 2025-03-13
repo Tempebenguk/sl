@@ -224,6 +224,7 @@ def start_timeout_timer():
                     else:
                         log_transaction(f"✅ Transaksi sukses, kelebihan: Rp.{overpaid}")
                     send_transaction_status()
+                    transaction_active = False
                     trigger_transaction()
                     break
             with print_lock:    
