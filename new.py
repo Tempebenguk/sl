@@ -4,7 +4,6 @@ import datetime
 import os
 import requests
 from flask import Flask, request, jsonify
-import threading
 
 # Konfigurasi PIN GPIO
 BILL_ACCEPTOR_PIN = 14
@@ -52,21 +51,18 @@ id_trx = None
 payment_token = None
 product_price = 0
 last_pulse_received_time = time.time()
-timeout_thread = None 
 insufficient_payment_count = 0
-transaction_lock = threading.Lock()
-log_lock = threading.Lock()
-print_lock = threading.Lock()
+transaction_lock = None
+log_lock = None
+print_lock = None
 
-# Fungsi log transaction
+# Fungsi log transaksi
 def log_transaction(message):
     timestamp = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
-    with log_lock:
-        with open(LOG_FILE, "a") as log:
-            log.write(f"{timestamp} {message}\n")
+    with open(LOG_FILE, "a") as log:
+        log.write(f"{timestamp} {message}\n")
             
-    with print_lock:
-        print(f"{timestamp} {message}")
+    print(f"{timestamp} {message}")
 
 # Inisialisasi pigpio
 pi = pigpio.pi()
@@ -135,7 +131,6 @@ def send_transaction_status():
                     last_pulse_received_time = time.time()
                     transaction_active = True 
                     pi.write(EN_PIN, 1) 
-                    start_timeout_timer()
 
             elif "Payment already completed" in error_message:
                 log_transaction("✅ Pembayaran sudah selesai sebelumnya. Reset transaksi.")
@@ -160,7 +155,7 @@ def closest_valid_pulse(pulses):
 # Fungsi untuk menghitung pulsa
 def count_pulse(gpio, level, tick):
     """Menghitung pulsa dari bill acceptor dan mengonversinya ke nominal uang."""
-    global pulse_count, last_pulse_time, total_inserted, last_pulse_received_time, product_price, pending_pulse_count, timeout_thread
+    global pulse_count, last_pulse_time, total_inserted, last_pulse_received_time, product_price, pending_pulse_count
 
     if not transaction_active:
         return
@@ -173,12 +168,7 @@ def count_pulse(gpio, level, tick):
             pi.write(EN_PIN, 0)
         pending_pulse_count += 1
         last_pulse_time = current_time
-        # last_pulse_received_time = current_time 
-        with print_lock:
-            print(f"🔢 Pulsa diterima: {pending_pulse_count}")  
-        if timeout_thread is None or not timeout_thread.is_alive():
-            timeout_thread = threading.Thread(target=start_timeout_timer, daemon=True)
-            timeout_thread.start()
+        print(f"🔢 Pulsa diterima: {pending_pulse_count}")  
 
 # Fungsi untuk menangani timeout & pembayaran sukses
 def start_timeout_timer():
@@ -224,14 +214,12 @@ def start_timeout_timer():
             send_transaction_status()
             break
 
-        with print_lock:
-            print(f"\r⏳ Timeout dalam {remaining_time} detik...", end="")
-
+        print(f"\r⏳ Timeout dalam {remaining_time} detik...", end="")
         time.sleep(1) 
 
 def process_final_pulse_count():
     """Memproses pulsa yang terkumpul setelah tidak ada pulsa masuk selama 2 detik."""
-    global pending_pulse_count, total_inserted, pulse_count
+    global pending_pulse_count, total_inserted
 
     if pending_pulse_count == 0:
         return
@@ -251,8 +239,7 @@ def process_final_pulse_count():
 
     pending_pulse_count = 0 
     pi.write(EN_PIN, 1)
-    with print_lock:
-        print("✅ Koreksi selesai, EN_PIN diaktifkan kembali")
+    print("✅ Koreksi selesai, EN_PIN diaktifkan kembali")
 
 # Reset transaksi setelah selesai
 def reset_transaction():
@@ -335,5 +322,4 @@ def trigger_transaction():
 
 if __name__ == "__main__":
     pi.callback(BILL_ACCEPTOR_PIN, pigpio.RISING_EDGE, count_pulse)
-    threading.Thread(target=trigger_transaction, daemon=True).start()
     app.run(host="0.0.0.0", port=5000, debug=True)
