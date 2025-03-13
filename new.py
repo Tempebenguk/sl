@@ -215,11 +215,11 @@ def start_timeout_timer():
 
                     if total_inserted < product_price:
                         log_transaction(f"⏰ Timeout! Kurang: Rp.{remaining_due}")
+                        return
                     elif total_inserted == product_price:
                         log_transaction(f"✅ Transaksi sukses, total: Rp.{total_inserted}")
                     else:
                         log_transaction(f"✅ Transaksi sukses, kelebihan: Rp.{overpaid}")
-
                     send_transaction_status()
                     break 
             with print_lock:    
