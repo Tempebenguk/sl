@@ -138,6 +138,7 @@ def send_transaction_status():
                     last_pulse_received_time = time.time()
                     transaction_active = True 
                     pi.write(EN_PIN, 1) 
+                    timeout_thread = threading.Thread(target=start_timeout_timer, daemon=True)
                     start_timeout_timer()
 
             elif "Payment already completed" in error_message:
@@ -219,6 +220,7 @@ def start_timeout_timer():
 
                     if total_inserted < product_price:
                         log_transaction(f"⏰ Timeout! Kurang: Rp.{remaining_due}")
+                        start_timeout_timer()
                     elif total_inserted == product_price:
                         log_transaction(f"✅ Transaksi sukses, total: Rp.{total_inserted}")
                     else:
