@@ -148,6 +148,7 @@ def send_transaction_status():
     except requests.exceptions.RequestException as e:
         log_transaction(f"⚠️ Gagal mengirim status transaksi: {e}")
     reset_transaction()
+    trigger_transaction()
         
 def closest_valid_pulse(pulses):
     """Mendapatkan jumlah pulsa yang paling mendekati nilai yang valid."""
