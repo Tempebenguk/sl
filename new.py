@@ -52,8 +52,6 @@ payment_token = None
 product_price = 0
 last_pulse_received_time = time.time()
 insufficient_payment_count = 0
-log_lock = threading.Lock()
-print_lock = threading.Lock()
 
 # Fungsi log transaction
 def log_transaction(message):
