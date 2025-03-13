@@ -52,18 +52,13 @@ payment_token = None
 product_price = 0
 last_pulse_received_time = time.time()
 insufficient_payment_count = 0
-log_lock = threading.Lock()
-print_lock = threading.Lock()
 
 # Fungsi log transaction
 def log_transaction(message):
     timestamp = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
-    with log_lock:
-        with open(LOG_FILE, "a") as log:
+    with open(LOG_FILE, "a") as log:
             log.write(f"{timestamp} {message}\n")
-            
-    with print_lock:
-        print(f"{timestamp} {message}")
+            print(f"{timestamp} {message}")
 
 # Inisialisasi pigpio
 pi = pigpio.pi()
