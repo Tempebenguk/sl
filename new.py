@@ -57,6 +57,7 @@ insufficient_payment_count = 0
 transaction_lock = threading.Lock()
 log_lock = threading.Lock()
 print_lock = threading.Lock()
+print_event = threading.Event()
 
 # Fungsi log transaction
 def log_transaction(message):
@@ -66,7 +67,10 @@ def log_transaction(message):
             log.write(f"{timestamp} {message}\n")
             
     with print_lock:
+        print_event.wait()
         print(f"{timestamp} {message}")
+        print_event.clear()
+        print_event.set()
 
 # Inisialisasi pigpio
 pi = pigpio.pi()
@@ -333,4 +337,4 @@ def trigger_transaction():
 if __name__ == "__main__":
     pi.callback(BILL_ACCEPTOR_PIN, pigpio.RISING_EDGE, count_pulse)
     threading.Thread(target=trigger_transaction, daemon=True).start()
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
