@@ -11,9 +11,9 @@ EN_PIN = 15
 
 # Konfigurasi transaksi
 TIMEOUT = 20
-DEBOUNCE_TIME = 0.045
+DEBOUNCE_TIME = 0.03
 TOLERANCE = 2
-MAX_RETRY = 2 
+MAX_RETRY = 0 
 
 # Mapping jumlah pulsa ke nominal uang
 PULSE_MAPPING = {
