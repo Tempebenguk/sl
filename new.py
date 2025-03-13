@@ -136,6 +136,7 @@ def send_transaction_status():
                     transaction_active = True 
                     pi.write(EN_PIN, 1) 
                     start_timeout_timer()
+                    return
 
             elif "Payment already completed" in error_message:
                 log_transaction("✅ Pembayaran sudah selesai sebelumnya. Reset transaksi.")
@@ -220,7 +221,7 @@ def start_timeout_timer():
                     else:
                         log_transaction(f"✅ Transaksi sukses, kelebihan: Rp.{overpaid}")
                     send_transaction_status()
-                    trigger_transaction()
+                    break
             with print_lock:    
                 print(f"\r⏳ Timeout dalam {remaining_time} detik...", end="")
             time.sleep(1)
