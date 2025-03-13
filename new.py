@@ -14,7 +14,7 @@ EN_PIN = 15
 TIMEOUT = 20
 DEBOUNCE_TIME = 0.05
 TOLERANCE = 2
-MAX_RETRY = 1 
+MAX_RETRY = 2 
 
 # Mapping jumlah pulsa ke nominal uang
 PULSE_MAPPING = {
