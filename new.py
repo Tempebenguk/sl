@@ -304,6 +304,7 @@ def reset_transaction():
     insufficient_payment_count = 0
     pending_pulse_count = 0
     log_transaction("🔄 Transaksi di-reset ke default.")
+    pi.write(EN_PIN, 0) 
 
 @app.route('/api/status', methods=['GET'])
 def get_bill_acceptor_status():
