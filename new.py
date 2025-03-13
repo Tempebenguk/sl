@@ -11,7 +11,7 @@ EN_PIN = 15
 
 # Konfigurasi transaksi
 TIMEOUT = 20
-DEBOUNCE_TIME = 0.05
+DEBOUNCE_TIME = 0.045
 TOLERANCE = 2
 MAX_RETRY = 2 
 
