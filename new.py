@@ -138,9 +138,7 @@ def send_transaction_status():
                     last_pulse_received_time = time.time()
                     transaction_active = True 
                     pi.write(EN_PIN, 1) 
-                    if timeout_thread is None or not timeout_thread.is_alive():
-                        timeout_thread = threading.Thread(target=start_timeout_timer, daemon=True)
-                        timeout_thread.start()
+                    start_timeout_timer()
 
             elif "Payment already completed" in error_message:
                 log_transaction("✅ Pembayaran sudah selesai sebelumnya. Reset transaksi.")
