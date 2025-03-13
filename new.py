@@ -61,17 +61,18 @@ print_lock = threading.Lock()
 # Fungsi log transaction
 def log_transaction(message):
     timestamp = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
-    with log_lock:
-        with open(LOG_FILE, "a") as log:
-            log.write(f"{timestamp} {message}\n")
+    # with log_lock:
+    #     with open(LOG_FILE, "a") as log:
+    #         log.write(f"{timestamp} {message}\n")
             
-    with print_lock:
-        print(f"{timestamp} {message}")
+    # with print_lock:
+    #     print(f"{timestamp} {message}")
 
 # Inisialisasi pigpio
 pi = pigpio.pi()
 if not pi.connected:
-    log_transaction("⚠️ Gagal terhubung ke pigpio daemon!")
+    with print_lock:
+        print("⚠️ Gagal terhubung ke pigpio daemon!")
     exit()
 
 pi.set_mode(BILL_ACCEPTOR_PIN, pigpio.INPUT)
@@ -88,12 +89,15 @@ def fetch_invoice_details():
         if response.status_code == 200 and "data" in response_data:
             for invoice in response_data["data"]:
                 if not invoice.get("isPaid", False):
-                    log_transaction(f"✅ Invoice ditemukan: {invoice['paymentToken']}, belum dibayar.")
+                    with print_lock:
+                        print(f"✅ Invoice ditemukan: {invoice['paymentToken']}, belum dibayar.")
                     return invoice["ID"], invoice["paymentToken"], int(invoice["productPrice"])
 
-        log_transaction("✅ Tidak ada invoice yang belum dibayar.")
+        with print_lock:
+            print("✅ Tidak ada invoice yang belum dibayar.")
     except requests.exceptions.RequestException as e:
-        log_transaction(f"⚠️ Gagal mengambil data invoice: {e}")
+        with print_lock:
+            print(f"⚠️ Gagal mengambil data invoice: {e}")
 
     return None, None, None
 
@@ -110,7 +114,8 @@ def send_transaction_status():
 
         if response.status_code == 200:
             res_data = response.json()
-            log_transaction(f"✅ Pembayaran sukses: {res_data.get('message')}, Waktu: {res_data.get('payment date')}")
+            with print_lock:
+                print(f"✅ Pembayaran sukses: {res_data.get('message')}, Waktu: {res_data.get('payment date')}")
             reset_transaction() 
 
         elif response.status_code == 400:
@@ -120,32 +125,38 @@ def send_transaction_status():
             except ValueError:
                 error_message = response.text 
 
-            log_transaction(f"⚠️ Gagal ({response.status_code}): {error_message}")
+            with print_lock:
+                print(f"⚠️ Gagal ({response.status_code}): {error_message}")
 
             if "Insufficient payment" in error_message:
                 global insufficient_payment_count
                 insufficient_payment_count += 1 
 
                 if insufficient_payment_count > MAX_RETRY:
-                    log_transaction("🚫 Pembayaran kurang dan telah melebihi toleransi transaksi, transaksi dibatalkan!")
+                    with print_lock:
+                        print("🚫 Pembayaran kurang dan telah melebihi toleransi transaksi, transaksi dibatalkan!")
                     reset_transaction()
                     pi.write(EN_PIN, 1)  
                 else:
-                    log_transaction(f"🔄 Pembayaran kurang, percobaan {insufficient_payment_count}/{MAX_RETRY}. Lanjutkan memasukkan uang...")
+                    with print_lock:
+                        print(f"🔄 Pembayaran kurang, percobaan {insufficient_payment_count}/{MAX_RETRY}. Lanjutkan memasukkan uang...")
                     last_pulse_received_time = time.time()
                     transaction_active = True 
                     pi.write(EN_PIN, 1) 
                     start_timeout_timer()
 
             elif "Payment already completed" in error_message:
-                log_transaction("✅ Pembayaran sudah selesai sebelumnya. Reset transaksi.")
+                with print_lock:
+                    print("✅ Pembayaran sudah selesai sebelumnya. Reset transaksi.")
                 pi.write(EN_PIN, 0)  
 
         else:
-            log_transaction(f"⚠️ Respon tidak terduga: {response.status_code}")
+            with print_lock:
+                print(f"⚠️ Respon tidak terduga: {response.status_code}")
 
     except requests.exceptions.RequestException as e:
-        log_transaction(f"⚠️ Gagal mengirim status transaksi: {e}")
+        with print_lock:
+            print(f"⚠️ Gagal mengirim status transaksi: {e}")
     reset_transaction()
         
 def closest_valid_pulse(pulses):
@@ -198,9 +209,11 @@ def start_timeout_timer():
                     overpaid = max(0, total_inserted - product_price) 
 
                     if total_inserted == product_price:
-                        log_transaction(f"✅ Transaksi selesai, total: Rp.{total_inserted}")
+                        with print_lock:
+                            print(f"✅ Transaksi selesai, total: Rp.{total_inserted}")
                     else:
-                        log_transaction(f"✅ Transaksi selesai, kelebihan: Rp.{overpaid}")
+                        with print_lock:
+                            print(f"✅ Transaksi selesai, kelebihan: Rp.{overpaid}")
 
                     # Kirim status transaksi
                     send_transaction_status()
@@ -214,11 +227,14 @@ def start_timeout_timer():
                     overpaid = max(0, total_inserted - product_price) 
 
                     if total_inserted < product_price:
-                        log_transaction(f"⏰ Timeout! Kurang: Rp.{remaining_due}")
+                        with print_lock:
+                            print(f"⏰ Timeout! Kurang: Rp.{remaining_due}")
                     elif total_inserted == product_price:
-                        log_transaction(f"✅ Transaksi sukses, total: Rp.{total_inserted}")
+                        with print_lock:
+                            print(f"✅ Transaksi sukses, total: Rp.{total_inserted}")
                     else:
-                        log_transaction(f"✅ Transaksi sukses, kelebihan: Rp.{overpaid}")
+                        with print_lock:
+                            print(f"✅ Transaksi sukses, kelebihan: Rp.{overpaid}")
 
                     send_transaction_status()
                     break 
@@ -241,10 +257,12 @@ def process_final_pulse_count():
         total_inserted += received_amount
         remaining_due = max(product_price - total_inserted, 0)
 
-        log_transaction(f"💰 Koreksi pulsa: {pending_pulse_count} -> {corrected_pulses} ({received_amount}) | Total: Rp.{total_inserted} | Sisa: Rp.{remaining_due}")
+        with print_lock:
+            print(f"💰 Koreksi pulsa: {pending_pulse_count} -> {corrected_pulses} ({received_amount}) | Total: Rp.{total_inserted} | Sisa: Rp.{remaining_due}")
     
     else:
-        log_transaction(f"⚠️ Pulsa {pending_pulse_count} tidak valid!")
+        with print_lock:
+            print(f"⚠️ Pulsa {pending_pulse_count} tidak valid!")
 
     pending_pulse_count = 0 
     pi.write(EN_PIN, 1)
@@ -262,7 +280,8 @@ def reset_transaction():
     last_pulse_received_time = time.time()  
     insufficient_payment_count = 0  
     pending_pulse_count = 0  
-    log_transaction("🔄 Transaksi di-reset ke default.")
+    with print_lock:
+        print("🔄 Transaksi di-reset ke default.")
 
 @app.route('/api/status', methods=['GET'])
 def get_bill_acceptor_status():
@@ -287,7 +306,8 @@ def trigger_transaction():
             time.sleep(1) 
             continue
 
-        log_transaction("🔍 Mencari payment token terbaru...")
+        with print_lock:
+            print("🔍 Mencari payment token terbaru...")
         
         try:
             response = requests.get(TOKEN_API, timeout=1)
@@ -301,7 +321,8 @@ def trigger_transaction():
                     
                     if age_in_minutes <= 3:  
                         payment_token = token_data["PaymentToken"]
-                        log_transaction(f"✅ Token ditemukan: {payment_token}, umur: {age_in_minutes:.2f} menit")
+                        with print_lock:
+                            print(f"✅ Token ditemukan: {payment_token}, umur: {age_in_minutes:.2f} menit")
 
                         # Ambil detail invoice berdasarkan paymentToken
                         invoice_response = requests.get(f"{INVOICE_API}{payment_token}", timeout=5)
@@ -316,18 +337,22 @@ def trigger_transaction():
                                 transaction_active = True
                                 pending_pulse_count = 0 
                                 last_pulse_received_time = time.time()
-                                log_transaction(f"🔔 Transaksi dimulai! ID: {id_trx}, Token: {payment_token}, Tagihan: Rp.{product_price}")
+                                with print_lock:
+                                    print(f"🔔 Transaksi dimulai! ID: {id_trx}, Token: {payment_token}, Tagihan: Rp.{product_price}")
                                 pi.write(EN_PIN, 1)
                                 threading.Thread(target=start_timeout_timer, daemon=True).start()
                                 return
                             else:
-                                log_transaction(f"⚠️ Invoice {payment_token} sudah dibayar, mencari lagi...")
+                                with print_lock:
+                                    print(f"⚠️ Invoice {payment_token} sudah dibayar, mencari lagi...")
 
-            log_transaction("✅ Tidak ada payment token yang memenuhi syarat. Menunggu...")
+            with print_lock:
+                print("✅ Tidak ada payment token yang memenuhi syarat. Menunggu...")
             time.sleep(1)
 
         except requests.exceptions.RequestException as e:
-            log_transaction(f"⚠️ Gagal mengambil daftar payment token: {e}")
+            with print_lock:
+                print(f"⚠️ Gagal mengambil daftar payment token: {e}")
             time.sleep(1)
 
 if __name__ == "__main__":
