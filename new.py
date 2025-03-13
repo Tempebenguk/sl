@@ -5,6 +5,7 @@ import os
 import requests
 from flask import Flask, request, jsonify
 import threading
+import logging
 
 # Konfigurasi PIN GPIO
 BILL_ACCEPTOR_PIN = 14
@@ -39,6 +40,8 @@ LOG_FILE = os.path.join(LOG_DIR, "log.txt")
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
 
+logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+
 # Inisialisasi Flask
 app = Flask(__name__)
 
@@ -58,15 +61,10 @@ transaction_lock = threading.Lock()
 log_lock = threading.Lock()
 print_lock = threading.Lock()
 
-# Fungsi log transaction
+# Fungsi log transaction# Fungsi log transaction (menggunakan logging)
 def log_transaction(message):
-    timestamp = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M:%S]")
-    with log_lock:
-        with open(LOG_FILE, "a") as log:
-            log.write(f"{timestamp} {message}\n")
-            
-    with print_lock:
-        print(f"{timestamp} {message}")
+    logging.info(message)
+    print(f"{datetime.datetime.now().strftime('[%Y-%m-%d %H:%M:%S]')} {message}")
 
 # Inisialisasi pigpio
 pi = pigpio.pi()
