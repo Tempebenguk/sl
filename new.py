@@ -100,9 +100,6 @@ def fetch_invoice_details():
 # Fungsi POST hasil transaksi
 def send_transaction_status():
     global total_inserted, transaction_active, last_pulse_received_time
-
-    
-
     try:
         response = requests.post(BILL_API, json={
             "ID": id_trx,
