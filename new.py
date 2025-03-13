@@ -137,8 +137,7 @@ def send_transaction_status():
                     log_transaction(f"🔄 Pembayaran kurang, percobaan {insufficient_payment_count}/{MAX_RETRY}. Lanjutkan memasukkan uang...")
                     last_pulse_received_time = time.time()
                     transaction_active = True 
-                    pi.write(EN_PIN, 1) 
-                    timeout_thread = threading.Thread(target=start_timeout_timer, daemon=True)
+                    pi.write(EN_PIN, 1)
                     start_timeout_timer()
 
             elif "Payment already completed" in error_message:
